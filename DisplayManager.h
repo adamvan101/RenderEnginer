@@ -32,7 +32,7 @@ private:
 	void displayLoop();
 	void renderAllRaws();
 	void renderRaw(int id);
-	void renderObj(std::string objPath);
+	void renderObj(std::string objPath, std::vector<std::string> textureFiles, std::vector<std::string> textureLocs);
 
 	int _windowHeight;
 	int _windowWidth;

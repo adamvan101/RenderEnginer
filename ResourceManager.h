@@ -14,11 +14,13 @@
 #include "GLObjects.h"
 #include "picoPNG.h"
 #include "obj_parser.h"
-#include "GLSLShader.h"
 
 #include <map>
 #include <string>
 #include <stdlib.h>
+
+// Forward declaration
+class GLSLShader;
 
 class ResourceManager {
 
@@ -28,7 +30,7 @@ public:
 	~ResourceManager();
 
 	GLTexture GetTexture(std::string texturePath);
-	GLObj GetObject(std::string objPath, GLuint shader);
+	GLObj GetObject(std::string objPath, GLSLShader* shader, bool tex, std::vector<std::string> textureFiles, std::vector<std::string> textureLocs);
 	GLRaw GetRaw(int id);
 
 	int LoadRaw(float* data, int len, int loc = 0);
@@ -46,5 +48,5 @@ private:
     std::map<int, GLRaw> _rawCache;
 
     GLTexture loadPNG(std::string filename);
-    GLObj loadObj(std::string filename, GLuint shader);//, GLuint shader, int &count, bool tex);
+    GLObj loadObj(std::string filename, GLSLShader* shader, bool tex, std::vector<std::string> textureFiles, std::vector<std::string> textureLocs);
 };

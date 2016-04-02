@@ -29,7 +29,11 @@ public:
 	GLuint GetAttribLocation(const char* loc);
 	GLuint GetId();
 
-private:
+	const char* GetPosition() { return "vPos"; };
+	const char* GetNorm() { return "vNorm"; };
+	const char* GetTexture() { return "vTex"; };
+
+protected:
 
 	struct Shader {
 		const char*  filename;

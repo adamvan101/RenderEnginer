@@ -65,6 +65,11 @@ void DisplayManager::init() {
 
 void DisplayManager::displayLoop() { 
 
+	std::vector<std::string> dsTexts;
+	dsTexts.push_back("Textures/DeathStar.png");
+	std::vector<std::string> dsLocs;
+	dsLocs.push_back("tex");
+
 	while (!glfwWindowShouldClose (_window)) {
 		//Set the base depth to 1.0
 	    glClearDepth(1.0);
@@ -73,7 +78,7 @@ void DisplayManager::displayLoop() {
 
 		renderAllRaws();
 
-		renderObj("Objects/DeathStar.obj");
+		renderObj("Objects/DeathStar.obj", dsTexts, dsLocs);
 
 		glfwSwapBuffers (_window);
 
@@ -107,10 +112,16 @@ void DisplayManager::renderRaw(int id) {
 	}
 }
 
-void DisplayManager::renderObj(std::string objPath) {
+void DisplayManager::renderObj(std::string objPath, std::vector<std::string> textureFiles, std::vector<std::string> textureLocs) {
 
-	GLObj model = _resManager.GetObject(objPath, _defaultShader.GetId());
+	GLObj model = _resManager.GetObject(objPath, &_defaultShader, textureFiles.size() > 0, textureFiles, textureLocs);
 	glUseProgram(model.shader);
+
+	for (int i = 0; i < textureFiles.size(); i++) {
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, model.textures[i]);
+		glUniform1i(model.textureLocs[i], i);
+	}
 
 	glBindVertexArray(model.vaoId);
 	glEnableVertexAttribArray(0);

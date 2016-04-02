@@ -12,6 +12,7 @@
 #endif  // __APPLE__
 
 #include <string>
+#include <vector>
 
 struct GLTexture {
         std::string filename;
@@ -25,6 +26,8 @@ struct GLObj {
         unsigned int vaoId;
         int size;
         GLuint shader;
+        std::vector<GLuint> textures;
+        std::vector<GLuint> textureLocs;
 };
 
 struct GLRaw {

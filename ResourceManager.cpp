@@ -1,5 +1,8 @@
 #include "ResourceManager.h"
 
+// To resolve forward declaration
+#include "GLSLShader.h"
+
 ResourceManager::ResourceManager() {
 
 }
@@ -23,13 +26,13 @@ GLTexture ResourceManager::GetTexture(std::string texturePath) {
     return text->second;
 }
 
-GLObj ResourceManager::GetObject(std::string objectPath, GLuint shader) {
+GLObj ResourceManager::GetObject(std::string objectPath, GLSLShader* shader, bool tex, std::vector<std::string> textureFiles, std::vector<std::string> textureLocs) {
 
     auto object = _objectCache.find(objectPath);
 
     // Load and insert if not in cache
     if (object == _objectCache.end()) {
-        GLObj newObject = loadObj(objectPath, shader);
+        GLObj newObject = loadObj(objectPath, shader, tex, textureFiles, textureLocs);
         _objectCache.insert(std::make_pair(objectPath, newObject));
 
         return newObject;
@@ -131,7 +134,7 @@ GLTexture ResourceManager::loadPNG(std::string filename) {
 
 // Modified from:
 // https://github.com/capnramses/antons_opengl_tutorials_book/blob/master/21_cube_mapping/main.cpp
-GLObj ResourceManager::loadObj(std::string filename, GLuint shader) {//, GLuint shader, int &count, bool tex)
+GLObj ResourceManager::loadObj(std::string filename, GLSLShader* shader, bool tex, std::vector<std::string> textureFiles, std::vector<std::string> textureLocs) {
 	GLObj obj = {};
 
     GLfloat* vp = NULL; // array of vertex points
@@ -155,38 +158,43 @@ GLObj ResourceManager::loadObj(std::string filename, GLuint shader) {//, GLuint 
     glBindBuffer (GL_ARRAY_BUFFER, vbo);
     glBufferData (GL_ARRAY_BUFFER, sizeof (GLfloat) * 3 * g_point_count, vp, GL_STATIC_DRAW);
 
-    // GLuint vbo_norm;
-    // glGenBuffers (1, &vbo_norm);
-    // glBindBuffer (GL_ARRAY_BUFFER, vbo_norm);
-    // glBufferData (GL_ARRAY_BUFFER, sizeof (GLfloat) * 3 * g_point_count, vn, GL_STATIC_DRAW);
+    GLuint vbo_norm;
+    glGenBuffers (1, &vbo_norm);
+    glBindBuffer (GL_ARRAY_BUFFER, vbo_norm);
+    glBufferData (GL_ARRAY_BUFFER, sizeof (GLfloat) * 3 * g_point_count, vn, GL_STATIC_DRAW);
 
-    // GLuint vbo_tex;
-    // if (tex)
-    // {
-    //     glGenBuffers (1, &vbo_tex);
-    //     glBindBuffer (GL_ARRAY_BUFFER, vbo_tex);
-    //     glBufferData (GL_ARRAY_BUFFER, sizeof (GLfloat) * 2 * g_point_count, vt, GL_STATIC_DRAW);
-    // }
+    GLuint vbo_tex;
+    if (tex)
+    {
+        glGenBuffers (1, &vbo_tex);
+        glBindBuffer (GL_ARRAY_BUFFER, vbo_tex);
+        glBufferData (GL_ARRAY_BUFFER, sizeof (GLfloat) * 2 * g_point_count, vt, GL_STATIC_DRAW);
+
+        for (int i = 0; i < textureFiles.size(); i++) {
+            GLTexture texture = loadPNG(textureFiles[i]);
+            obj.textures.push_back(texture.GLid);
+            obj.textureLocs.push_back(glGetUniformLocation(shader->GetId(), textureLocs[i].c_str()));
+        }
+    }
 
     GLuint vao = createVAO();
     glBindBuffer (GL_ARRAY_BUFFER, vbo);
-    GLuint pos = glGetAttribLocation(shader, "vPos");
+    GLuint pos = glGetAttribLocation(shader->GetId(), shader->GetPosition());
     glEnableVertexAttribArray(pos);
     glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
     
-    // glBindBuffer (GL_ARRAY_BUFFER, vbo_norm);
-    // pos = glGetAttribLocation(shader, "vNorm");
-    // glEnableVertexAttribArray(pos);
-    // glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+    glBindBuffer (GL_ARRAY_BUFFER, vbo_norm);
+    pos = glGetAttribLocation(shader->GetId(), shader->GetNorm());
+    glEnableVertexAttribArray(pos);
+    glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 
-    // if (tex)
-    // {
-    //     glBindBuffer (GL_ARRAY_BUFFER, vbo_tex);
-    //     pos = glGetAttribLocation(shader, "vTex");
-    //     glEnableVertexAttribArray(pos);
-    //     glVertexAttribPointer(pos, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);   
-    // }
-
+    if (tex)
+    {
+        glBindBuffer (GL_ARRAY_BUFFER, vbo_tex);
+        pos = glGetAttribLocation(shader->GetId(), shader->GetTexture());
+        glEnableVertexAttribArray(pos);
+        glVertexAttribPointer(pos, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);   
+    }
 
     if (vp != NULL)
         free(vp);
@@ -198,7 +206,7 @@ GLObj ResourceManager::loadObj(std::string filename, GLuint shader) {//, GLuint 
     obj.size = g_point_count;
     obj.vaoId = vao;
     obj.filename = filename;
-    obj.shader = shader;
+    obj.shader = shader->GetId();
     return obj;
 }
 
