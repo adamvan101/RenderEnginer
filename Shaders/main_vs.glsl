@@ -7,9 +7,12 @@ in vec2 vTex;
 
 out vec2 texCoord;
 
+uniform mat4 ModelView;
+//uniform vec4 LightPosition;
+uniform mat4 Projection;
+
 void main() {
-    //gl_Position = trans * vec4(vPos, 1.0);
-    gl_Position = vec4(vPos, 1.0);
+    gl_Position = Projection * ModelView * vec4(vPos, 1.0); 
 
     texCoord = vTex;
 }

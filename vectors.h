@@ -1,6 +1,7 @@
 #pragma once
 #include <stdio.h>
 #include <math.h>
+
 class Mat4;
 
 class Vec3{
@@ -19,6 +20,8 @@ class Vec3{
     Vec3 operator+(const Vec3& rhs) const;
     Vec3 operator-(const Vec3& rhs) const;
     float &operator[](int i);
+
+    static Vec3 Up();
 };
 
 class Vec4{
@@ -29,6 +32,7 @@ class Vec4{
     float v[4];
 
     //functions
+    Vec3 xyz();
     void print();
     Vec4& operator*=(const Mat4& rhs);
     float &operator[](int i);
@@ -43,6 +47,7 @@ class Mat4 {
     float matrix[16];
     
     //functions
+    static Mat4 Identity();
     void setVal(int i, float x);
     void print();
     Mat4 operator*(const Mat4& rhs) const;
@@ -51,6 +56,3 @@ class Mat4 {
 
     //virtual ~Mat4();
 };
-
-Mat4 identity();
-void VecTest();

@@ -1,6 +1,7 @@
 #include "DisplayManager.h"
 
-DisplayManager::DisplayManager(int w, int h, const char* title) {
+DisplayManager::DisplayManager(int w, int h, const char* title) :
+	MainCam(Vec3(10, 10, 10), Vec3(0, 0, 0)) {
 
     // start GL context and O/S window using the GLFW helper library
     if (!glfwInit ()) {
@@ -55,11 +56,20 @@ void DisplayManager::Run() {
 
 void DisplayManager::init() {
 
+	projection = Mat4::Identity();
+	view = Mat4::Identity();
+	PMVmatrix = Mat4::Identity();
+
 	float vertices[] = { -0.5, 0.5, 0, -0.5, -0.5, 0, 0.5, -0.5, 0, 0.5, -0.5, 0, 0.5, 0.5, 0, -0.5, 0.5, 0 };
 
     _defaultShader.Use();
     GLuint loc = _defaultShader.GetAttribLocation("vPos");
 
+    int fov = 45;
+    projection = Perspective(fov, _windowWidth/(float)_windowHeight, 0.1, 10000);
+    view = LookAt(MainCam.Position(), MainCam.At(), Vec3::Up());
+
+    PMVmatrix = projection * view;
 	// _rawIds.push_back(_resManager.LoadRaw(vertices, 18, loc));
 }
 
@@ -125,6 +135,10 @@ void DisplayManager::renderObj(std::string objPath, std::vector<std::string> tex
 
 	glBindVertexArray(model.vaoId);
 	glEnableVertexAttribArray(0);
+
+	glUniformMatrix4fv(_defaultShader.GetMV(), 1, GL_FALSE, (view * Translate(model.Position) * Rotate(model.Rotation) * Scale(model.Scale)).matrix);
+    glUniformMatrix4fv(_defaultShader.GetProj(), 1, GL_FALSE, projection.matrix);
+
 	glDrawArrays(GL_TRIANGLES, 0, model.size);
 	
 	// Unbind

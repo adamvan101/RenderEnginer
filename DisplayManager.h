@@ -1,22 +1,16 @@
-#ifdef __APPLE__  // include Mac OS X verions of headers
-#  include <GL/glew.h>
-#  include <GLFW/glfw3.h>
-#else // non-Mac OS X operating systems
-#  include <GL/glew.h>
-//uncomment these two and comment glfw3.h if you use glut on linux
-//#  include <GL/freeglut.h>
-//#  include <GL/freeglut_ext.h>
-#  include <GLFW/glfw3.h>
-#endif  // __APPLE__
+#pragma once
+
+#include "GLDeps.h"
 
 #include <string>
 #include <vector>
-#include "GLSLShader.h"
-#include "ResourceManager.h"
-#include "InputManager.h"
 
-#include "vectors.h"
+#include "Camera.h"
+#include "GLSLShader.h"
+#include "InputManager.h"
+#include "ResourceManager.h"
 #include "transformations.h"
+#include "vectors.h"
 
 class DisplayManager {
 
@@ -25,6 +19,12 @@ public:
 	~DisplayManager();
 
 	void Run();
+
+	Mat4 projection;
+	Mat4 view;
+	Mat4 PMVmatrix;
+
+	Camera MainCam;
 
 private:
 

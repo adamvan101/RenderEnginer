@@ -1,5 +1,4 @@
 #include "transformations.h"
-int testing = 1;
 
 Mat4 Translate(Vec3 trans){
   Mat4 t;
@@ -20,6 +19,10 @@ Mat4 Scale(Vec3 scale){
   s.matrix[10] = scale.v[2];
   s.matrix[15] = 1.0;
   return s;
+}
+
+Mat4 Rotate(Vec4 rot) {
+  return Rotate(rot.v[3], rot.xyz());
 }
 
 Mat4 Rotate(float theta, Vec3 rot){
@@ -56,6 +59,7 @@ Mat4 LookAt(Vec3 eye, Vec3 center, Vec3 up){
   Up = up.normal();
   s = f.cross(Up);
   u = s.normal().cross(f);
+
   m[0] = s.v[0];
   m[4] = s.v[1];
   m[8] = s.v[2];
@@ -71,6 +75,7 @@ Mat4 LookAt(Vec3 eye, Vec3 center, Vec3 up){
   Vec3 zero; //hacky, should just implement scalar multiplicaton
   Mat4 T = Translate(zero-eye);
   return M*T;
+  return M;
 }
 
 
@@ -84,23 +89,3 @@ Mat4 Perspective(float fovy, float aspect, float zNear, float zFar){
   m[14] = 2*zFar*zNear/(zNear-zFar);
   return Mat4(m);
 }
-
-void TransTest(){
-  Mat4 A = Rotate(30, Vec3(1, 0, 0));
-  Mat4 B = Rotate(60, Vec3(1, 0, 0));
-  Mat4 C = Rotate(90, Vec3(1, 0, 0));
-  A *= B;
-  printf("AB = ");
-  A.print();
-  printf("should equal...\n");
-  printf("C = ");
-  C.print();
-}
-
-// //get rid of this when integrating into full program
-// int main(){
-//   if(testing){
-//     VecTest();
-//     TransTest();
-//   }
-// }

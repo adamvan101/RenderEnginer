@@ -1,10 +1,18 @@
 #include "Camera.h"
 
-Camera::Camera(Vec3 pos, Vec3 heading) {
+Camera::Camera(Vec3 pos, Vec3 at) {
 	_pos = pos;
-	_heading = heading;
+	_at = at;
 }
 
 Camera::~Camera() {
 
+}
+
+Vec3 Camera::Position() {
+	return _pos;
+}
+
+Vec3 Camera::At() {
+	return _at;
 }

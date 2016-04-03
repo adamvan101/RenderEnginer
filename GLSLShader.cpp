@@ -2,6 +2,9 @@
 
 GLSLShader::GLSLShader(const char* vertexShaderFile, const char* fragmentShaderFile) {
 	_program = initShader(vertexShaderFile, fragmentShaderFile);
+
+	_mv = glGetUniformLocation(_program, "ModelView");
+	_proj = glGetUniformLocation(_program, "Projection");
 }
 
 GLSLShader::GLSLShader() {
@@ -26,6 +29,14 @@ GLuint GLSLShader::GetUniformLocation(const char* loc) {
 
 GLuint GLSLShader::GetAttribLocation(const char* loc) {
 	return glGetAttribLocation(_program, loc);
+}
+
+GLuint GLSLShader::GetMV() {
+	return _mv;
+}
+
+GLuint GLSLShader::GetProj() {
+	return _proj;
 }
 
 GLuint GLSLShader::initShader(const char* vertexShaderFile, const char* fragmentShaderFile) {

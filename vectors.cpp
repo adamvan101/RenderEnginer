@@ -63,6 +63,10 @@ Vec3 Vec3::operator-(const Vec3& rhs) const{
   return result;
 }
 
+Vec3 Vec3::Up() {
+  return Vec3(0, 1, 0);
+}
+
 Vec4::Vec4(){
   v[0] = 0;
   v[1] = 0;
@@ -75,6 +79,10 @@ Vec4::Vec4(float x, float y, float z, float w){
   v[1] = y;
   v[2] = z;
   v[3] = w;
+}
+
+Vec3 Vec4::xyz() {
+  return Vec3(v[0], v[1], v[2]);
 }
 
 float &Vec4::operator[](int i)
@@ -182,61 +190,11 @@ Vec4 Mat4::operator*(const Vec4& rhs) const{
   return Vec4(temp[0], temp[1], temp[2], temp[3]);
 }
 
-Mat4 identity(){
+Mat4 Mat4::Identity(){
   Mat4 id;
   id.matrix[0] = 1;
   id.matrix[5] = 1;
   id.matrix[10] = 1;
   id.matrix[15] = 1;
   return id;
-}
-
-//Unit Tests
-void VecTest(){
-    //vector 3 tests
-    Vec3 a(1,1,0);
-    Vec3 b(0,1,1);
-    Vec3 c;
-    c = a.cross(b);
-    printf("a x b = ");
-    c.print();
-    printf("a has magnitude: %f\n", c.mag());
-    c = a+b;
-    printf("a + b = ");
-    c.print();
-    printf("c normalized is ");
-    c.normal().print();
-    
-    //Matrix vector tests
-    Vec4 x(1,2,3,4);
-    Vec4 y;
-    printf("x = ");
-    x.print();
-    Mat4 A,B,C;
-    A.setVal(0,1);
-    A.setVal(1,3);
-    A.setVal(4,2);
-    A.setVal(5,4);
-    y = A*x;
-    printf("(*) Ax = ");
-    y.print();
-    x *= A;
-    printf("(*=) Ax = ");
-    x.print();
-
-    //Matrix Matrix tests
-    B.setVal(0,1);
-    B.setVal(1,3);
-    B.setVal(4,2);
-    B.setVal(5,4);
-    printf("A = ");
-    A.print();
-    printf("B = ");
-    B.print();
-    printf("(*) AB = ");
-    C = A*B;
-    C.print();
-    printf("(*=) AB = ");
-    A *= B;
-    A.print();
 }

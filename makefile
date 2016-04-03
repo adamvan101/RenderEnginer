@@ -12,7 +12,7 @@ LDLIBS+=-lstdc++
 # INIT_SHADER = initshader.o
 
 #SOURCES = main.cpp *.cpp GLSLShader.cpp DisplayManager.cpp Camera.cpp transformations.c vectors.cpp
-SOURCES = *.cpp transformations.c
+SOURCES = *.cpp
 
 main:
 	$(CC) -std=c++11 $(SOURCES) $(LDFLAGS) -o main
