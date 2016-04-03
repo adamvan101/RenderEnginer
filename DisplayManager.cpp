@@ -1,7 +1,8 @@
 #include "DisplayManager.h"
+#include "time.h"
 
 DisplayManager::DisplayManager(int w, int h, const char* title) :
-	MainCam(Vec3(10, 10, 10), Vec3(0, 0, 0)) {
+	MainCam(10, Vec3(0, 0, 0)) {
 
     // start GL context and O/S window using the GLFW helper library
     if (!glfwInit ()) {
@@ -42,6 +43,7 @@ DisplayManager::DisplayManager(int w, int h, const char* title) :
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
     glfwSetKeyCallback(_window, _inputManager.KeyboardCallback);
+    glfwSetScrollCallback(_window, _inputManager.MouseWheelCallback);
 }
 
 DisplayManager::~DisplayManager() {
@@ -60,17 +62,19 @@ void DisplayManager::init() {
 	view = Mat4::Identity();
 	PMVmatrix = Mat4::Identity();
 
-	float vertices[] = { -0.5, 0.5, 0, -0.5, -0.5, 0, 0.5, -0.5, 0, 0.5, -0.5, 0, 0.5, 0.5, 0, -0.5, 0.5, 0 };
+	float vertices[] = { -2, 2, 0, -2, -2, 0, 2, -2, 0, 2, -2, 0, 2, 2, 0, -2, 2, 0 };
+	float vertices2[] = { 0, 2, -2, 0, -2, -2, 0, -2, 2, 0, -2, 2, 0, 2, 2, 0, 2, -2 };
 
     _defaultShader.Use();
     GLuint loc = _defaultShader.GetAttribLocation("vPos");
 
-    int fov = 45;
-    projection = Perspective(fov, _windowWidth/(float)_windowHeight, 0.1, 10000);
-    view = LookAt(MainCam.Position(), MainCam.At(), Vec3::Up());
+    float fov = 45.0f;
+    projection = Perspective(fov, _windowWidth/(float)_windowHeight, 0.1f, 10000.0f);
+    view = MainCam.View();
 
     PMVmatrix = projection * view;
-	// _rawIds.push_back(_resManager.LoadRaw(vertices, 18, loc));
+	_rawIds.push_back(_resManager.LoadRaw(vertices, 18, loc));
+	_rawIds.push_back(_resManager.LoadRaw(vertices2, 18, loc));
 }
 
 void DisplayManager::displayLoop() { 
@@ -80,22 +84,49 @@ void DisplayManager::displayLoop() {
 	std::vector<std::string> dsLocs;
 	dsLocs.push_back("tex");
 
+	float lastUpdate = clock();
+
 	while (!glfwWindowShouldClose (_window)) {
 		//Set the base depth to 1.0
 	    glClearDepth(1.0);
 	    //Clear the color and depth buffer
 	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+	    // FPS limiter
+	    while (clock() - 16 < lastUpdate);
+	    lastUpdate = clock();
+
+	    updateCam();
+
 		renderAllRaws();
 
 		renderObj("Objects/DeathStar.obj", dsTexts, dsLocs);
 
-		glfwSwapBuffers (_window);
+		glfwSwapBuffers(_window);
 
     	glfwPollEvents();
 	}
 
 	glfwTerminate();
+}
+
+void DisplayManager::updateCam() {
+
+	double xpos, ypos;
+    glfwGetCursorPos(_window, &xpos, &ypos);
+
+    if (glfwGetMouseButton(_window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS)
+    {
+    	MainCam.Update(xpos - MouseLastX, ypos - MouseLastY);
+    }
+
+    MainCam.DeltaDistance(InputManager::MouseWheel);
+    InputManager::MouseWheel = 0;
+
+    view = MainCam.View();
+
+    MouseLastX = xpos;
+   	MouseLastY = ypos;
 }
 
 void DisplayManager::renderAllRaws() {
@@ -111,6 +142,10 @@ void DisplayManager::renderRaw(int id) {
 	if (raw.vaoId != 0) {
 		glBindVertexArray(raw.vaoId);
 		glEnableVertexAttribArray(0);
+
+		glUniformMatrix4fv(_defaultShader.GetMV(), 1, GL_FALSE,  view.matrix);
+    	glUniformMatrix4fv(_defaultShader.GetProj(), 1, GL_FALSE,  projection.matrix);
+
 		glDrawArrays(GL_TRIANGLES, 0, raw.size);
 	
 		// Unbind
@@ -137,7 +172,7 @@ void DisplayManager::renderObj(std::string objPath, std::vector<std::string> tex
 	glEnableVertexAttribArray(0);
 
 	glUniformMatrix4fv(_defaultShader.GetMV(), 1, GL_FALSE, (view * Translate(model.Position) * Rotate(model.Rotation) * Scale(model.Scale)).matrix);
-    glUniformMatrix4fv(_defaultShader.GetProj(), 1, GL_FALSE, projection.matrix);
+    glUniformMatrix4fv(_defaultShader.GetProj(), 1, GL_FALSE,  projection.matrix);
 
 	glDrawArrays(GL_TRIANGLES, 0, model.size);
 	

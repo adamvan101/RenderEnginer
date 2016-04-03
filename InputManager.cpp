@@ -1,5 +1,7 @@
 #include "InputManager.h"
 
+double InputManager::MouseWheel = 0;
+
 InputManager::InputManager() {
 
 }
@@ -18,4 +20,8 @@ void InputManager::KeyboardCallback(GLFWwindow* window, int key, int code, int a
           glfwSetWindowShouldClose(window, GL_TRUE);
           break;
 	}
+}
+
+void InputManager::MouseWheelCallback(GLFWwindow *w, double xoffset, double yoffest) {
+	MouseWheel = yoffest;
 }

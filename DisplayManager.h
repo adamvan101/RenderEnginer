@@ -25,6 +25,8 @@ public:
 	Mat4 PMVmatrix;
 
 	Camera MainCam;
+	double MouseLastX = 0;
+	double MouseLastY = 0;
 
 private:
 
@@ -33,6 +35,7 @@ private:
 	void renderAllRaws();
 	void renderRaw(int id);
 	void renderObj(std::string objPath, std::vector<std::string> textureFiles, std::vector<std::string> textureLocs);
+	void updateCam();
 
 	int _windowHeight;
 	int _windowWidth;
