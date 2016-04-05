@@ -24,15 +24,21 @@ public:
 	GLObj GetObject(std::string objPath, GLSLShader* shader, bool tex, std::vector<std::string> textureFiles, std::vector<std::string> textureLocs);
 	GLRaw GetRaw(int id);
 
+	bool ScaleObject(std::string objectPath, Vec3 scale);
+	bool TranslateObject(std::string objectPath, Vec3 trans);
+
 	int LoadRaw(float* data, int len, int loc = 0);
+
+	GLuint CreateVAO();
+	void UnbindVAO();
+
+	GLuint MakeVAO(GLSLShader* shader, float* vp, float* vn, float* vt, int size, bool tex);
 
     static unsigned char* ReadFileSource(const char* shaderFile, long &size);
 
 private:
-
-	GLuint createVAO();
+	
 	void loadVAO(int loc, int size, float* data);
-	void unbindVAO();
 
     std::map<std::string, GLTexture> _textureCache;
     std::map<std::string, GLObj> _objectCache;

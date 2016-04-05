@@ -41,6 +41,34 @@ GLObj ResourceManager::GetObject(std::string objectPath, GLSLShader* shader, boo
     return object->second;
 }
 
+bool ResourceManager::ScaleObject(std::string objectPath, Vec3 scale) {
+    auto object = _objectCache.find(objectPath);
+
+    if (object != _objectCache.end()) {
+        GLObj o = object->second;
+        o.Scale = scale;
+        object->second = o;
+
+        return true;
+    }
+
+    return false;
+}
+
+bool ResourceManager::TranslateObject(std::string objectPath, Vec3 trans) {
+    auto object = _objectCache.find(objectPath);
+
+    if (object != _objectCache.end()) {
+        GLObj o = object->second;
+        o.Position = trans;
+        object->second = o;
+
+        return true;
+    }
+
+    return false;
+}
+
 GLRaw ResourceManager::GetRaw(int id) {
 
     auto raw = _rawCache.find(id);
@@ -52,10 +80,76 @@ GLRaw ResourceManager::GetRaw(int id) {
     return raw->second;
 }
 
-GLuint ResourceManager::createVAO() {
+int ResourceManager::LoadRaw(float* data, int len, int loc) {
+
+    GLuint id = CreateVAO();
+    loadVAO(loc, len, data);
+    UnbindVAO();
+
+    GLRaw newRaw = {};
+    newRaw.vaoId = id;
+    newRaw.size = len;
+
+    _rawCache.insert(std::make_pair(id, newRaw));
+
+    return id;
+}
+
+GLuint ResourceManager::CreateVAO() {
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
+    return vao;
+}
+
+void ResourceManager::UnbindVAO() {
+    glBindVertexArray(0);
+}
+
+GLuint ResourceManager::MakeVAO(GLSLShader* shader, float* vp, float* vn, float* vt, int size, bool tex) {
+    GLuint vbo;
+    glGenBuffers (1, &vbo);
+    glBindBuffer (GL_ARRAY_BUFFER, vbo);
+    glBufferData (GL_ARRAY_BUFFER, sizeof (GLfloat) * 3 * size, vp, GL_STATIC_DRAW);
+
+    GLuint vbo_norm;
+    glGenBuffers (1, &vbo_norm);
+    glBindBuffer (GL_ARRAY_BUFFER, vbo_norm);
+    glBufferData (GL_ARRAY_BUFFER, sizeof (GLfloat) * 3 * size, vn, GL_STATIC_DRAW);
+
+    GLuint vbo_tex;
+    if (tex)
+    {
+        glGenBuffers (1, &vbo_tex);
+        glBindBuffer (GL_ARRAY_BUFFER, vbo_tex);
+        glBufferData (GL_ARRAY_BUFFER, sizeof (GLfloat) * 2 * size, vt, GL_STATIC_DRAW);
+
+        // for (int i = 0; i < textureFiles.size(); i++) {
+        //     GLTexture texture = loadPNG(textureFiles[i]);
+        //     obj.textures.push_back(texture.GLid);
+        //     obj.textureLocs.push_back(glGetUniformLocation(shader->GetId(), textureLocs[i].c_str()));
+        // }
+    }
+
+    GLuint vao = CreateVAO();
+    glBindBuffer (GL_ARRAY_BUFFER, vbo);
+    GLuint pos = glGetAttribLocation(shader->GetId(), shader->GetPosition());
+    glEnableVertexAttribArray(pos);
+    glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+    
+    glBindBuffer (GL_ARRAY_BUFFER, vbo_norm);
+    pos = glGetAttribLocation(shader->GetId(), shader->GetNorm());
+    glEnableVertexAttribArray(pos);
+    glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+
+    if (tex)
+    {
+        glBindBuffer (GL_ARRAY_BUFFER, vbo_tex);
+        pos = glGetAttribLocation(shader->GetId(), shader->GetTexture());
+        glEnableVertexAttribArray(pos);
+        glVertexAttribPointer(pos, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);   
+    }
+
     return vao;
 }
 
@@ -69,25 +163,6 @@ void ResourceManager::loadVAO(int loc, int size, float* data) {
     glVertexAttribPointer(loc, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
     
     glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
-int ResourceManager::LoadRaw(float* data, int len, int loc) {
-
-	GLuint id = createVAO();
-	loadVAO(loc, len, data);
-	unbindVAO();
-
-	GLRaw newRaw = {};
-	newRaw.vaoId = id;
-	newRaw.size = len;
-
-	_rawCache.insert(std::make_pair(id, newRaw));
-
-	return id;
-}
-
-void ResourceManager::unbindVAO() {
-	glBindVertexArray(0);
 }
 
 GLTexture ResourceManager::loadPNG(std::string filename) {
@@ -153,48 +228,48 @@ GLObj ResourceManager::loadObj(std::string filename, GLSLShader* shader, bool te
 		exit(EXIT_FAILURE);
     }
 
-    GLuint vbo;
-    glGenBuffers (1, &vbo);
-    glBindBuffer (GL_ARRAY_BUFFER, vbo);
-    glBufferData (GL_ARRAY_BUFFER, sizeof (GLfloat) * 3 * g_point_count, vp, GL_STATIC_DRAW);
+    // GLuint vbo;
+    // glGenBuffers (1, &vbo);
+    // glBindBuffer (GL_ARRAY_BUFFER, vbo);
+    // glBufferData (GL_ARRAY_BUFFER, sizeof (GLfloat) * 3 * g_point_count, vp, GL_STATIC_DRAW);
 
-    GLuint vbo_norm;
-    glGenBuffers (1, &vbo_norm);
-    glBindBuffer (GL_ARRAY_BUFFER, vbo_norm);
-    glBufferData (GL_ARRAY_BUFFER, sizeof (GLfloat) * 3 * g_point_count, vn, GL_STATIC_DRAW);
+    // GLuint vbo_norm;
+    // glGenBuffers (1, &vbo_norm);
+    // glBindBuffer (GL_ARRAY_BUFFER, vbo_norm);
+    // glBufferData (GL_ARRAY_BUFFER, sizeof (GLfloat) * 3 * g_point_count, vn, GL_STATIC_DRAW);
 
-    GLuint vbo_tex;
-    if (tex)
-    {
-        glGenBuffers (1, &vbo_tex);
-        glBindBuffer (GL_ARRAY_BUFFER, vbo_tex);
-        glBufferData (GL_ARRAY_BUFFER, sizeof (GLfloat) * 2 * g_point_count, vt, GL_STATIC_DRAW);
+    // GLuint vbo_tex;
+    // if (tex)
+    // {
+    //     glGenBuffers (1, &vbo_tex);
+    //     glBindBuffer (GL_ARRAY_BUFFER, vbo_tex);
+    //     glBufferData (GL_ARRAY_BUFFER, sizeof (GLfloat) * 2 * g_point_count, vt, GL_STATIC_DRAW);
 
-        for (int i = 0; i < textureFiles.size(); i++) {
-            GLTexture texture = loadPNG(textureFiles[i]);
-            obj.textures.push_back(texture.GLid);
-            obj.textureLocs.push_back(glGetUniformLocation(shader->GetId(), textureLocs[i].c_str()));
-        }
-    }
+    //     for (int i = 0; i < textureFiles.size(); i++) {
+    //         GLTexture texture = loadPNG(textureFiles[i]);
+    //         obj.textures.push_back(texture.GLid);
+    //         obj.textureLocs.push_back(glGetUniformLocation(shader->GetId(), textureLocs[i].c_str()));
+    //     }
+    // }
 
-    GLuint vao = createVAO();
-    glBindBuffer (GL_ARRAY_BUFFER, vbo);
-    GLuint pos = glGetAttribLocation(shader->GetId(), shader->GetPosition());
-    glEnableVertexAttribArray(pos);
-    glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+    // GLuint vao = CreateVAO();
+    // glBindBuffer (GL_ARRAY_BUFFER, vbo);
+    // GLuint pos = glGetAttribLocation(shader->GetId(), shader->GetPosition());
+    // glEnableVertexAttribArray(pos);
+    // glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
     
-    glBindBuffer (GL_ARRAY_BUFFER, vbo_norm);
-    pos = glGetAttribLocation(shader->GetId(), shader->GetNorm());
-    glEnableVertexAttribArray(pos);
-    glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
+    // glBindBuffer (GL_ARRAY_BUFFER, vbo_norm);
+    // pos = glGetAttribLocation(shader->GetId(), shader->GetNorm());
+    // glEnableVertexAttribArray(pos);
+    // glVertexAttribPointer(pos, 3, GL_FLOAT, GL_FALSE, 0, (void*) 0);
 
-    if (tex)
-    {
-        glBindBuffer (GL_ARRAY_BUFFER, vbo_tex);
-        pos = glGetAttribLocation(shader->GetId(), shader->GetTexture());
-        glEnableVertexAttribArray(pos);
-        glVertexAttribPointer(pos, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);   
-    }
+    // if (tex)
+    // {
+    //     glBindBuffer (GL_ARRAY_BUFFER, vbo_tex);
+    //     pos = glGetAttribLocation(shader->GetId(), shader->GetTexture());
+    //     glEnableVertexAttribArray(pos);
+    //     glVertexAttribPointer(pos, 2, GL_FLOAT, GL_FALSE, 0, (void*) 0);   
+    // }
 
     if (vp != NULL)
         free(vp);
@@ -204,9 +279,18 @@ GLObj ResourceManager::loadObj(std::string filename, GLSLShader* shader, bool te
         free(vt);
 
     obj.size = g_point_count;
-    obj.vaoId = vao;
+    obj.vaoId = MakeVAO(shader, vp, vn, vt, g_point_count, tex);//, std::vector<std::string> textureFiles, std::vector<std::string> textureLocs);
     obj.filename = filename;
     obj.shader = shader->GetId();
+
+    for (int i = 0; i < textureFiles.size(); i++) {
+        GLTexture texture = loadPNG(textureFiles[i]);
+        obj.textures.push_back(texture.GLid);
+        obj.textureLocs.push_back(glGetUniformLocation(shader->GetId(), textureLocs[i].c_str()));
+    }
+
+    UnbindVAO();
+
     return obj;
 }
 
